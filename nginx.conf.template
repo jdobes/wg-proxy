@@ -1,0 +1,25 @@
+include /etc/nginx/modules/*.conf;
+
+worker_processes auto;
+pid /tmp/nginx.pid;
+error_log /dev/stderr notice;
+
+events {
+	worker_connections 1024;
+}
+
+stream {
+	resolver ${DNS_RESOLVER} valid=30s;
+	resolver_timeout 5s;
+
+	upstream wg_backend {
+		zone wg_backend 64k;
+		server ${UPSTREAM_HOST}:${UPSTREAM_PORT} resolve;
+	}
+
+	server {
+		listen 0.0.0.0:${LISTEN_PORT} udp;
+		proxy_pass wg_backend;
+		proxy_timeout 1m;
+	}
+}
